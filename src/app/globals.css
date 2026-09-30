@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta Luxury anti-slop SKILL.md:9 */
+  --color-luxury-bg: #fbf9f6;
+  --color-luxury-ink: #1a1716;
+  --color-luxury-rose: #c38d94;
+  --color-luxury-gold: #d4a373;
+
+  /* Mantendo compatibilidade com tokens antigos - mapeados para luxury */
+  --color-beige-50: #fbf9f6;
+  --color-beige-100: #f5f0e8;
+  --color-beige-200: #e8e0d6;
+  --color-beige-300: #d4c4b0;
+  --color-beige-400: #bda892;
+  --color-beige-500: #a8957a;
+  --color-beige-600: #85725a;
+  --color-beige-700: #625042;
+  --color-beige-800: #3f322a;
+  --color-beige-900: #1a1716;
+
+  --color-rose-50: #fdf2f3;
+  --color-rose-100: #fce8ea;
+  --color-rose-200: #f8d1d6;
+  --color-rose-300: #e8a8b3;
+  --color-rose-400: #c38d94;
+  --color-rose-500: #c38d94;
+  --color-rose-600: #b47a82;
+  --color-rose-700: #9c6570;
+  --color-rose-800: #7a4f58;
+  --color-rose-900: #5c3b42;
+
+  --color-maroon-50: #fbf9f6;
+  --color-maroon-100: #f5f0e8;
+  --color-maroon-200: #d0c8d3;
+  --color-maroon-300: #b8adc4;
+  --color-maroon-400: #a090ab;
+  --color-maroon-500: #887895;
+  --color-maroon-600: #70627d;
+  --color-maroon-700: #584c66;
+  --color-maroon-800: #40364e;
+  --color-maroon-900: #1a1716;
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+:root {
+  --background: #fbf9f6;
+  --foreground: #1a1716;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: #fbf9f6;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* /polish: curvas cúbicas finas + paleta luxury SKILL.md:9 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c38d94 #fbf9f6;
+}
+
+/* Curva editorial Vogue - cubic-bezier(0.16,1,0.3,1) para todos os hover */
+a,
+button {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Anti-slop: respiro editorial mínimo py-16 já garantido nos sections */
+::selection {
+  background: #c38d94;
+  color: #fbf9f6;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Date picker mantém paleta luxury */
+.rdp-root {
+  --rdp-accent-color: #c38d94;
+  --rdp-accent-background-color: #c38d94;
+  --rdp-today-color: #c38d94;
+  --rdp-disabled-opacity: 0.35;
+  --rdp-day-width: 2.75rem;
+  --rdp-day-height: 2.75rem;
+  font-family: var(--font-body);
+}
+.rdp-day_button {
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.rdp-day:not(.rdp-disabled) .rdp-day_button:hover {
+  background-color: #fce8ea;
+  color: #c38d94;
+}
+.rdp-month_caption {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+.rdp-chevron {
+  color: #c38d94;
+}
+.rdp-weekday {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #a8957a;
+}
+.rdp-day_selected .rdp-day_button {
+  background-color: #c38d94 !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px -6px #c38d94;
+}
+.rdp-day_today:not(.rdp-day_selected) .rdp-day_button {
+  border: 1px solid #c38d94;
+}
