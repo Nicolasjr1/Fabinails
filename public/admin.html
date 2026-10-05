@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fbf9f6">
+    <title>Admin | Fabi Nails</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/admin.js" defer></script>
+  </head>
+  <body class="admin-page">
+    <header class="topbar admin-topbar">
+      <a class="brand" href="/" aria-label="Fabi Nails, agendamento">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span class="brand-name">Fabi Nails</span>
+      </a>
+      <a class="admin-link" href="/">Voltar ao agendamento</a>
+    </header>
+
+    <main class="admin-layout">
+      <section id="login-panel" class="admin-login" aria-labelledby="admin-title">
+        <p class="eyebrow">ÁREA RESTRITA</p>
+        <h1 id="admin-title">Acesso administrativo</h1>
+        <form id="admin-login-form" class="admin-login-form">
+          <label class="field">
+            <span>Usuário</span>
+            <input name="username" autocomplete="username" required>
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <p id="login-message" class="form-message" role="alert"></p>
+          <button class="primary-button" type="submit">Entrar</button>
+        </form>
+      </section>
+
+      <section id="admin-dashboard" hidden>
+        <div class="admin-heading">
+          <div>
+            <p class="eyebrow">FABI NAILS</p>
+            <h1>Agenda</h1>
+            <p class="intro-copy">Agendamentos em ordem do mais antigo para o mais novo.</p>
+          </div>
+          <button id="admin-logout" class="secondary-button" type="button">Sair</button>
+        </div>
+
+        <section class="admin-section" aria-labelledby="appointments-title">
+          <div class="admin-section-heading">
+            <h2 id="appointments-title">Agendamentos</h2>
+            <button id="reload-appointments" class="secondary-button" type="button">Atualizar</button>
+          </div>
+          <p id="appointments-message" class="admin-message" aria-live="polite"></p>
+          <div id="appointments-list" class="appointments-list"></div>
+        </section>
+
+        <section class="admin-section" aria-labelledby="blocked-title">
+          <h2 id="blocked-title">Fechar um dia</h2>
+          <p class="admin-help">Fechar o dia cancela os agendamentos existentes e remove os horários da agenda pública.</p>
+          <form id="blocked-day-form" class="blocked-day-form">
+            <label class="field">
+              <span>Data</span>
+              <input name="date" type="date" required>
+            </label>
+            <label class="field">
+              <span>Motivo (opcional)</span>
+              <input name="reason" type="text" maxlength="160" placeholder="Ex.: compromisso">
+            </label>
+            <button class="primary-button danger-button" type="submit">Fechar dia</button>
+          </form>
+          <p id="blocked-message" class="admin-message" aria-live="polite"></p>
+          <div id="blocked-days-list" class="blocked-days-list"></div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

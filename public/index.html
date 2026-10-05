@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fbf9f6">
+    <meta name="description" content="Agende seu horário na Fabi Nails, em Manoel Ribas.">
+    <title>Agendamento | Fabi Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/booking.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Fabi Nails, agendamento">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span class="brand-name">Fabi Nails</span>
+      </a>
+      <nav class="header-actions" aria-label="Acesso">
+        <span class="studio-location">Agendamento</span>
+        <a class="admin-link" href="/admin">Admin</a>
+      </nav>
+    </header>
+
+    <main class="booking-layout">
+      <section class="booking-main" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="eyebrow">FABI NAILS · MANOEL RIBAS</p>
+          <h1 id="page-title">Agende seu horário</h1>
+          <p class="intro-copy" id="page-description">Selecione o serviço, a data e o horário que quiser.</p>
+          <nav class="step-nav" aria-label="Etapas do agendamento">
+            <a href="/booking/services" data-step-link="services">Serviço</a>
+            <a href="/booking/date" data-step-link="date">Data</a>
+            <a href="/booking/times" data-step-link="times">Horário</a>
+            <a href="/booking/contact" data-step-link="contact">Contato</a>
+          </nav>
+        </div>
+
+        <form id="booking-form" novalidate>
+          <section class="form-section" data-booking-step="services" aria-labelledby="service-title">
+            <div class="section-heading">
+              <span class="step-number">01</span>
+              <div>
+                <h2 id="service-title">Escolha o serviço</h2>
+                <p>Todos os atendimentos duram cerca de 2 horas.</p>
+              </div>
+            </div>
+            <div id="service-list" class="service-list" aria-live="polite">
+              <p class="loading-copy">Carregando serviços...</p>
+            </div>
+            <div class="step-actions">
+              <button id="continue-date" class="primary-button" type="button" disabled>Continuar para a data <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <section class="form-section" data-booking-step="date" aria-labelledby="date-title">
+            <div class="section-heading">
+              <span class="step-number">02</span>
+              <div>
+                <h2 id="date-title">Escolha o dia e horário</h2>
+                <p>Os horários disponíveis aparecem no calendário.</p>
+              </div>
+            </div>
+            <div class="date-time-grid">
+              <div class="calendar-panel">
+                <div class="calendar-header">
+                  <button class="icon-button" id="previous-month" type="button" aria-label="Mês anterior">‹</button>
+                  <h3 id="month-label" aria-live="polite"></h3>
+                  <button class="icon-button" id="next-month" type="button" aria-label="Próximo mês">›</button>
+                </div>
+                <div class="calendar-weekdays" aria-hidden="true">
+                  <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+                </div>
+                <div id="calendar-grid" class="calendar-grid" role="group" aria-label="Dias disponíveis"></div>
+                <p id="calendar-message" class="calendar-message" aria-live="polite"></p>
+              </div>
+              <div class="times-panel">
+                <h3 id="selected-date-label">Horários</h3>
+                <p class="times-hint">Escolha um dia para ver os horários.</p>
+                <div id="time-list" class="time-list" role="group" aria-label="Horários disponíveis"></div>
+              </div>
+            </div>
+            <div class="step-actions">
+              <button id="continue-times" class="primary-button" type="button" disabled>Ver horários livres <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <section class="form-section contact-section" data-booking-step="contact" aria-labelledby="contact-title">
+            <div class="section-heading">
+              <span class="step-number">03</span>
+              <div>
+                <h2 id="contact-title">Seus dados</h2>
+                <p>Usaremos seu WhatsApp para confirmar os detalhes.</p>
+              </div>
+            </div>
+            <div class="contact-fields">
+              <label class="field">
+                <span>Seu nome</span>
+                <input id="client-name" name="clientName" type="text" autocomplete="name" minlength="2" maxlength="80" placeholder="Como podemos te chamar?" required>
+              </label>
+              <label class="field">
+                <span>WhatsApp</span>
+                <input id="client-whatsapp" name="clientWhatsapp" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="(00) 00000-0000" required>
+              </label>
+            </div>
+            <p id="held-slot-message" class="held-slot-message"></p>
+            <p id="form-message" class="form-message" role="alert"></p>
+            <div class="submit-row">
+              <a class="back-link" href="/booking/times">← Trocar horário</a>
+              <button id="submit-booking" class="primary-button" type="submit" disabled>Confirmar agendamento <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+        </form>
+      </section>
+
+    </main>
+
+    <section id="confirmation" class="confirmation" aria-labelledby="confirmation-title" hidden>
+      <div class="confirmation-panel">
+        <span class="confirmation-mark" aria-hidden="true">✓</span>
+        <p class="eyebrow">HORÁRIO RESERVADO</p>
+        <h2 id="confirmation-title">Está marcado, <em id="confirmed-name"></em>.</h2>
+        <p id="confirmed-details" class="confirmation-copy"></p>
+        <a id="whatsapp-confirmation" class="primary-button" target="_blank" rel="noopener noreferrer">Enviar confirmação pelo WhatsApp <span aria-hidden="true">↗</span></a>
+        <button id="new-booking" class="text-button" type="button">Fazer outro agendamento</button>
+      </div>
+    </section>
+
+    <footer class="page-footer"><span>FABI NAILS</span><span>Beleza nos detalhes.</span></footer>
+  </body>
+</html>
