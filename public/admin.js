@@ -139,7 +139,7 @@ async function showDashboard() {
   loginPanel.hidden = true;
   dashboard.hidden = false;
   await Promise.all([loadAppointments(), loadBlockedDays()]);
-});
+}
 
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
