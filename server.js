@@ -35,10 +35,10 @@ function getBusinessSlotsForDate(date) {
   const weekday = new Date(`${date}T12:00:00-03:00`).getUTCDay();
 
   if (weekday === 6) {
-    return ['08:00', '10:00', '13:00'];
+    return ['08:00', '10:30', '13:00'];
   }
 
-  return ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'];
+  return ['08:00', '10:30', '13:00', '15:00', '17:00', '19:00'];
 }
 
 const MIME_TYPES = {
