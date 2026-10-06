@@ -34,6 +34,10 @@ const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000;
 function getBusinessSlotsForDate(date) {
   const weekday = new Date(`${date}T12:00:00-03:00`).getUTCDay();
 
+  if (weekday === 0) {
+    return [];
+  }
+
   if (weekday === 6) {
     return ['08:00', '10:30', '13:00'];
   }
