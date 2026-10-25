@@ -250,6 +250,33 @@ body[data-step="times"] .time-list { grid-template-columns: repeat(3, minmax(0, 
 .blocked-day-form { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(190px, 1.3fr) auto; align-items: end; gap: 12px; }
 .danger-button { min-height: 46px; background: var(--rose-dark); font-size: 14px; }
 .blocked-day-item { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); background: var(--white); font-size: 14px; }
+.cancel-page { min-height: 100vh; display: flex; flex-direction: column; }
+.cancel-layout { width: min(620px, 100%); flex: 1; margin: 0 auto; padding: 70px 24px; }
+.cancel-panel { padding: 32px; border: 1px solid var(--line); background: var(--white); }
+.cancel-panel h1 { margin: 0 0 18px; font: 400 38px/1.05 var(--display); }
+.cancel-panel .confirmation-copy { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.cancel-panel .form-message { min-height: 24px; }
+.cancel-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.cancel-actions .cancel-button, .cancel-actions .secondary-button { min-height: 44px; padding: 10px 14px; }
+.cancel-actions .cancel-button:disabled { opacity: .55; cursor: wait; }
+.cancel-appointment-link { display: block; margin-top: 14px; color: #8e444b; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.my-appointments-page { min-height: 100vh; display: flex; flex-direction: column; }
+.my-appointments-layout { width: min(850px, 100%); flex: 1; margin: 0 auto; padding: 48px 24px 64px; }
+.my-appointments-layout h1 { margin: 0 0 8px; font: 400 42px/1.05 var(--display); }
+.my-appointments-layout > section > .intro-copy { max-width: 620px; margin: 0 0 18px; }
+.client-appointments-list { display: grid; gap: 14px; margin-top: 20px; }
+.client-appointment { padding: 18px 0; border-top: 1px solid var(--line); }
+.client-appointment-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.client-appointment-details h2 { margin: 0 0 5px; font: 500 22px/1.15 var(--display); text-transform: capitalize; }
+.client-appointment-details p { margin: 0; color: var(--muted); font-size: 14px; }
+.client-appointment-status { flex: 0 0 auto; color: var(--rose-dark); font-size: 12px; font-weight: 600; }
+.client-appointment.status-cancelled, .client-appointment.status-completed { opacity: .72; }
+.client-cancellation-reason { color: var(--muted); font-size: 13px; }
+.client-cancel-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; margin-top: 14px; }
+.client-cancel-form .field, .cancel-reason-field { display: grid; gap: 6px; color: var(--ink); font-size: 13px; }
+.client-cancel-form textarea, .cancel-reason-field textarea { width: 100%; min-height: 70px; resize: vertical; padding: 10px 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--white); font: inherit; }
+.client-cancel-form .cancel-button:disabled { opacity: .55; cursor: wait; }
+.cancel-reason-field { margin-top: 22px; }
 
 .admin-agenda-layout { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); align-items: start; gap: 30px; margin-top: 20px; }
 .admin-calendar-panel { width: 100%; padding: 18px; }
@@ -279,6 +306,16 @@ body[data-step="times"] .time-list { grid-template-columns: repeat(3, minmax(0, 
   .header-actions .studio-location { display: none; }
   .admin-link { padding: 8px 0 8px 12px; font-size: 13px; }
   .admin-layout { padding: 28px 18px 44px; }
+  .cancel-layout { padding: 36px 18px; }
+  .cancel-panel { padding: 24px 20px; }
+  .cancel-panel h1 { font-size: 32px; }
+  .cancel-actions { flex-direction: column; }
+  .cancel-actions > * { width: 100%; }
+  .my-appointments-layout { padding: 34px 18px 44px; }
+  .my-appointments-layout h1 { font-size: 34px; }
+  .client-appointment-heading { flex-direction: column; gap: 7px; }
+  .client-cancel-form { grid-template-columns: minmax(0, 1fr); }
+  .client-cancel-form .cancel-button { width: 100%; }
   .admin-login { margin: 24px auto; }
   .admin-heading { align-items: flex-start; }
   .admin-section { padding: 20px 0; }

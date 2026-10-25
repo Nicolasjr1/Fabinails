@@ -1,6 +1,16 @@
 const STORAGE_KEY = "fabi-booking";
+const CLIENT_ACCESS_KEY = "fabi-client-access";
 const state = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}");
 state.availability ||= {};
+function getClientAccessToken() {
+  let token = localStorage.getItem(CLIENT_ACCESS_KEY);
+  if (!token) {
+    token = Array.from(crypto.getRandomValues(new Uint8Array(32)), (value) => value.toString(16).padStart(2, "0")).join("");
+    localStorage.setItem(CLIENT_ACCESS_KEY, token);
+  }
+  return token;
+}
+const clientAccessToken = getClientAccessToken();
 const step = location.pathname.split("/").filter(Boolean).at(-1) || "services";
 const pages = {
   services: { title: "Escolha o serviço", description: "Selecione o atendimento que deseja agendar." },
@@ -173,6 +183,9 @@ function showConfirmation(payload) {
   $("#confirmed-name").textContent = payload.clientName.split(/\s+/)[0];
   $("#confirmed-details").textContent = `${payload.serviceName} · ${displayDate(payload.date)} às ${payload.time}`;
   $("#whatsapp-confirmation").href = payload.notificationUrl;
+  const cancelLink = $("#cancel-appointment-link");
+  cancelLink.href = payload.cancelUrl;
+  cancelLink.hidden = !payload.cancelUrl;
   $("#confirmation").hidden = false;
 }
 async function init() {
@@ -213,9 +226,9 @@ async function init() {
       try {
         const result = await requestJson("/api/appointments", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ serviceId: state.serviceId, date: state.date, time: state.time, holdToken: state.holdToken, clientName, clientWhatsapp: $("#client-whatsapp").value }),
+          body: JSON.stringify({ serviceId: state.serviceId, date: state.date, time: state.time, holdToken: state.holdToken, clientName, clientWhatsapp: $("#client-whatsapp").value, clientAccessToken }),
         });
-        showConfirmation({ clientName, serviceName: service.name, date: state.date, time: state.time, notificationUrl: result.notificationUrl });
+        showConfirmation({ clientName, serviceName: service.name, date: state.date, time: state.time, notificationUrl: result.notificationUrl, cancelUrl: result.cancelUrl });
         await releaseHold();
       } catch (error) {
         elements.formMessage.textContent = error.message;

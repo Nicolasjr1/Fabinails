@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { URL } = require('url');
-const { randomUUID, randomBytes, timingSafeEqual, createHmac } = require('crypto');
+const { randomUUID, randomBytes, timingSafeEqual, createHmac, createHash } = require('crypto');
 
 function loadEnvFile() {
   const envPath = path.join(__dirname, '.env');
@@ -411,6 +411,127 @@ async function handleApi(req, res) {
     return;
   }
 
+  if (url.pathname === '/api/client/appointments' && req.method === 'GET') {
+    res.setHeader('Cache-Control', 'private, no-store');
+    const clientToken = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+    if (!clientToken || !/^[a-f0-9]{64}$/i.test(clientToken)) {
+      sendJson(res, 401, { error: 'Não encontramos seus agendamentos neste navegador.' });
+      return;
+    }
+    try {
+      if (!dbReady) throw new Error('Banco de dados indisponível');
+      const clientAccessHash = createHash('sha256').update(clientToken).digest('hex');
+      const result = await db.query(
+        'SELECT a.id, a.date, a.time, a.status, a."cancellationReason", s.name AS "serviceName" FROM "Appointment" a JOIN "Service" s ON s.id = a."serviceId" WHERE a."clientAccessHash" = $1 ORDER BY a.date ASC, a.time ASC',
+        [clientAccessHash],
+      );
+      sendJson(res, 200, result.rows);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos da cliente:', error);
+      sendJson(res, 500, { error: 'Não foi possível carregar seus agendamentos.' });
+    }
+    return;
+  }
+
+  const clientCancelMatch = url.pathname.match(/^\/api\/client\/appointments\/([a-f0-9-]+)\/cancel$/i);
+  if (clientCancelMatch && req.method === 'POST') {
+    const clientToken = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+    if (!clientToken || !/^[a-f0-9]{64}$/i.test(clientToken)) {
+      sendJson(res, 401, { error: 'Não encontramos seus agendamentos neste navegador.' });
+      return;
+    }
+    try {
+      if (!dbReady) throw new Error('Banco de dados indisponível');
+      const payload = await readBody(req);
+      const reason = typeof payload.reason === 'string' ? payload.reason.trim() : '';
+      if (reason.length > 500) {
+        sendJson(res, 400, { error: 'O motivo deve ter no máximo 500 caracteres.' });
+        return;
+      }
+      const clientAccessHash = createHash('sha256').update(clientToken).digest('hex');
+      const result = await db.query(
+        'UPDATE "Appointment" SET status = \'cancelled\', "cancellationReason" = $1, "updatedAt" = NOW() WHERE id = $2 AND "clientAccessHash" = $3 AND status IN (\'active\', \'confirmed\') RETURNING id',
+        [reason || null, clientCancelMatch[1], clientAccessHash],
+      );
+      if (!result.rowCount) {
+        sendJson(res, 404, { error: 'Agendamento não encontrado ou não pode mais ser cancelado.' });
+        return;
+      }
+      sendJson(res, 200, { ok: true, message: 'Agendamento cancelado com sucesso.' });
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento da cliente:', error);
+      sendJson(res, 500, { error: 'Não foi possível cancelar o agendamento.' });
+    }
+    return;
+  }
+
+  if (url.pathname === '/api/appointments/cancel' && req.method === 'GET') {
+    res.setHeader('Cache-Control', 'private, no-store');
+    const token = url.searchParams.get('token');
+    if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
+      sendJson(res, 400, { error: 'Link de cancelamento inválido.' });
+      return;
+    }
+    try {
+      if (!dbReady) throw new Error('Banco de dados indisponível');
+      const result = await db.query(
+        'SELECT a.date, a.time, a.status, s.name AS "serviceName" FROM "Appointment" a JOIN "Service" s ON s.id = a."serviceId" WHERE a."cancelToken" = $1',
+        [token],
+      );
+      if (!result.rowCount) {
+        sendJson(res, 404, { error: 'Agendamento não encontrado.' });
+        return;
+      }
+      const appointment = result.rows[0];
+      if (appointment.status === 'cancelled') {
+        sendJson(res, 200, { ...appointment, message: 'Este agendamento já foi cancelado.' });
+        return;
+      }
+      if (appointment.status === 'completed') {
+        sendJson(res, 409, { error: 'Este atendimento já foi concluído e não pode ser cancelado por este link.' });
+        return;
+      }
+      sendJson(res, 200, appointment);
+    } catch (error) {
+      console.error('Erro ao consultar cancelamento:', error);
+      sendJson(res, 500, { error: 'Não foi possível consultar o agendamento.' });
+    }
+    return;
+  }
+
+  if (url.pathname === '/api/appointments/cancel' && req.method === 'POST') {
+    try {
+      if (!dbReady) throw new Error('Banco de dados indisponível');
+      const { token, reason = '' } = await readBody(req);
+      if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+        sendJson(res, 400, { error: 'Link de cancelamento inválido.' });
+        return;
+      }
+      if (typeof reason !== 'string' || reason.trim().length > 500) {
+        sendJson(res, 400, { error: 'O motivo deve ter no máximo 500 caracteres.' });
+        return;
+      }
+      const result = await db.query(
+        'UPDATE "Appointment" SET status = \'cancelled\', "cancellationReason" = $1, "updatedAt" = NOW() WHERE "cancelToken" = $2 AND status IN (\'active\', \'confirmed\') RETURNING date, time',
+        [reason.trim() || null, token],
+      );
+      if (!result.rowCount) {
+        const existing = await db.query('SELECT status FROM "Appointment" WHERE "cancelToken" = $1', [token]);
+        if (!existing.rowCount) {
+          sendJson(res, 404, { error: 'Agendamento não encontrado.' });
+          return;
+        }
+        sendJson(res, 409, { error: existing.rows[0].status === 'cancelled' ? 'Este agendamento já foi cancelado.' : 'Este agendamento não pode mais ser cancelado por este link.' });
+        return;
+      }
+      sendJson(res, 200, { ok: true, message: 'Agendamento cancelado com sucesso.' });
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento pelo cliente:', error);
+      sendJson(res, 500, { error: 'Não foi possível cancelar o agendamento.' });
+    }
+    return;
+  }
+
   const holdMatch = url.pathname.match(/^\/api\/appointments\/hold\/([0-9a-f-]+)$/i);
   if (holdMatch && req.method === 'DELETE') {
     try {
@@ -490,11 +611,11 @@ async function handleApi(req, res) {
     try {
         if (!dbReady) throw new Error('Banco de dados indisponível');
         const payload = await readBody(req);
-        const { serviceId, date, time, clientName, clientWhatsapp } = payload;
+        const { serviceId, date, time, clientName, clientWhatsapp, clientAccessToken } = payload;
 
         const cleanName = typeof clientName === 'string' ? clientName.trim() : '';
         const cleanWhatsapp = typeof clientWhatsapp === 'string' ? clientWhatsapp.replace(/\D/g, '') : '';
-if (!serviceId || !isBookableDate(date) || !getBusinessSlotsForDate(date).includes(time) || cleanName.length < 2 || cleanName.length > 80 || cleanWhatsapp.length < 8 || cleanWhatsapp.length > 15 || !payload.holdToken) {
+if (!serviceId || !isBookableDate(date) || !getBusinessSlotsForDate(date).includes(time) || cleanName.length < 2 || cleanName.length > 80 || cleanWhatsapp.length < 8 || cleanWhatsapp.length > 15 || !payload.holdToken || typeof clientAccessToken !== 'string' || !/^[a-f0-9]{64}$/i.test(clientAccessToken)) {
           sendJson(res, 400, { error: 'Dados incompletos' });
           return;
         }
@@ -518,9 +639,11 @@ if (!serviceId || !isBookableDate(date) || !getBusinessSlotsForDate(date).includ
           return;
         }
 
+        const cancelToken = randomBytes(32).toString('hex');
+        const clientAccessHash = createHash('sha256').update(clientAccessToken).digest('hex');
         const inserted = await connection.query(
-          'INSERT INTO "Appointment" (id, "clientName", "clientWhatsapp", "serviceId", "date", "time", "status", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *',
-          [randomUUID(), cleanName, cleanWhatsapp, serviceId, date, time, 'active'],
+          'INSERT INTO "Appointment" (id, "clientName", "clientWhatsapp", "cancelToken", "clientAccessHash", "serviceId", "date", "time", "status", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) RETURNING *',
+          [randomUUID(), cleanName, cleanWhatsapp, cancelToken, clientAccessHash, serviceId, date, time, 'active'],
         );
         await connection.query('DELETE FROM "BookingHold" WHERE token = $1', [payload.holdToken]);
         await connection.query('COMMIT');
@@ -541,6 +664,7 @@ if (!serviceId || !isBookableDate(date) || !getBusinessSlotsForDate(date).includ
           ok: true,
           message: 'Agendamento salvo com sucesso.',
           notificationUrl,
+          cancelUrl: `/cancel?token=${cancelToken}`,
         });
     } catch (error) {
         if (connection) await connection.query('ROLLBACK').catch(() => {});
@@ -566,6 +690,11 @@ async function initializeDatabase() {
     if (!dbUrl) throw new Error('DATABASE_URL não foi configurada no arquivo .env');
     const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
     await db.query(schema);
+    await db.query('ALTER TABLE "Appointment" ADD COLUMN IF NOT EXISTS "cancelToken" TEXT');
+    await db.query('ALTER TABLE "Appointment" ADD COLUMN IF NOT EXISTS "clientAccessHash" TEXT');
+    await db.query('ALTER TABLE "Appointment" ADD COLUMN IF NOT EXISTS "cancellationReason" TEXT');
+    await db.query('CREATE INDEX IF NOT EXISTS "Appointment_clientAccessHash_idx" ON "Appointment" ("clientAccessHash")');
+    await db.query('CREATE UNIQUE INDEX IF NOT EXISTS "Appointment_cancelToken_key" ON "Appointment" ("cancelToken") WHERE "cancelToken" IS NOT NULL');
     await db.query('ALTER TABLE "Appointment" DROP CONSTRAINT IF EXISTS "Appointment_date_time_key"');
     await db.query('DROP INDEX IF EXISTS "Appointment_date_time_active_key"');
     await db.query('CREATE UNIQUE INDEX IF NOT EXISTS "Appointment_date_time_bookable_key" ON "Appointment" (date, time) WHERE status NOT IN (\'cancelled\', \'completed\')');
@@ -605,7 +734,7 @@ async function handleRequest(req, res) {
   }
 
   const bookingRoutes = ['/booking/services', '/booking/date', '/booking/times', '/booking/contact', '/booking/confirmation'];
-  const safePath = pathname === '/' || bookingRoutes.includes(pathname) ? '/index.html' : pathname === '/admin' ? '/admin.html' : pathname;
+  const safePath = pathname === '/' || bookingRoutes.includes(pathname) ? '/index.html' : pathname === '/admin' ? '/admin.html' : pathname === '/cancel' ? '/cancel.html' : pathname === '/meus-agendamentos' ? '/my-appointments.html' : pathname;
   const filePath = path.resolve(PUBLIC_DIR, `.${safePath}`);
 
   if (!filePath.startsWith(`${PUBLIC_DIR}${path.sep}`)) {

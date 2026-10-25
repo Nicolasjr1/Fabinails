@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/cancel", "destination": "/cancel.html" },
+    { "source": "/meus-agendamentos", "destination": "/my-appointments.html" },
     { "source": "/booking/:path*", "destination": "/index.html" }
   ]
 }

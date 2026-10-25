@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fbf9f6">
+    <title>Cancelar agendamento | Fabi Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/cancel.js" defer></script>
+  </head>
+  <body class="cancel-page">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Fabi Nails, agendamento">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span class="brand-name">Fabi Nails</span>
+      </a>
+      <a class="admin-link" href="/">Agendamento</a>
+    </header>
+    <main class="cancel-layout">
+      <section class="cancel-panel" aria-labelledby="cancel-title">
+        <p class="eyebrow">FABI NAILS</p>
+        <h1 id="cancel-title">Cancelar agendamento</h1>
+        <p id="cancel-details" class="confirmation-copy" aria-live="polite">Consultando seu agendamento...</p>
+        <label class="field cancel-reason-field" for="cancel-reason">
+          <span>Por que deseja cancelar? (opcional)</span>
+          <textarea id="cancel-reason" maxlength="500" rows="3" placeholder="Se quiser, conte o motivo"></textarea>
+        </label>
+        <p id="cancel-message" class="form-message" role="alert"></p>
+        <div class="cancel-actions">
+          <button id="confirm-cancel" class="cancel-button" type="button" disabled>Confirmar cancelamento</button>
+          <a class="secondary-button" href="/">Voltar ao agendamento</a>
+        </div>
+      </section>
+    </main>
+    <footer class="page-footer"><span>FABI NAILS</span><span>Beleza nos detalhes.</span></footer>
+  </body>
+</html>

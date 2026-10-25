@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "Appointment" (
   "id" TEXT PRIMARY KEY,
   "clientName" TEXT NOT NULL,
   "clientWhatsapp" TEXT NOT NULL,
+  "cancelToken" TEXT,
   "serviceId" TEXT NOT NULL REFERENCES "Service"("id"),
   "date" TEXT NOT NULL,
   "time" TEXT NOT NULL,
