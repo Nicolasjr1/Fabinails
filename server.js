@@ -168,7 +168,7 @@ async function loadAvailabilityForMonth(month, holdToken) {
 
   await db.query('DELETE FROM "BookingHold" WHERE "expiresAt" <= NOW()');
   const result = await db.query(
-    'SELECT "date", "time" FROM "Appointment" WHERE "date" >= $1 AND "date" < $2 AND status <> \'cancelled\' UNION ALL SELECT "date", "time" FROM "BookingHold" WHERE "date" >= $1 AND "date" < $2 AND "expiresAt" > NOW() AND ($3::text IS NULL OR token <> $3) ORDER BY "date", "time"',
+    'SELECT "date", "time" FROM "Appointment" WHERE "date" >= $1 AND "date" < $2 AND status NOT IN (\'cancelled\', \'completed\') UNION ALL SELECT "date", "time" FROM "BookingHold" WHERE "date" >= $1 AND "date" < $2 AND "expiresAt" > NOW() AND ($3::text IS NULL OR token <> $3) ORDER BY "date", "time"',
     [startDate, nextDate, holdToken || null],
   );
   const blockedResult = await db.query(
@@ -204,7 +204,7 @@ async function loadDaySlots(date, holdToken) {
   if (blocked.rowCount) return [];
   await db.query('DELETE FROM "BookingHold" WHERE "expiresAt" <= NOW()');
   const result = await db.query(
-    'SELECT "time" FROM "Appointment" WHERE "date" = $1 AND status <> \'cancelled\' UNION SELECT "time" FROM "BookingHold" WHERE "date" = $1 AND "expiresAt" > NOW() AND ($2::text IS NULL OR token <> $2)',
+    'SELECT "time" FROM "Appointment" WHERE "date" = $1 AND status NOT IN (\'cancelled\', \'completed\') UNION SELECT "time" FROM "BookingHold" WHERE "date" = $1 AND "expiresAt" > NOW() AND ($2::text IS NULL OR token <> $2)',
     [date, holdToken || null],
   );
   const taken = new Set(result.rows.map((row) => row.time));
@@ -281,7 +281,7 @@ async function handleApi(req, res) {
     if (url.pathname === '/api/admin/appointments' && req.method === 'GET') {
       try {
         const result = await db.query(
-          'SELECT a.id, a."clientName", a."clientWhatsapp", a.date, a.time, a.status, a."createdAt", s.name AS "serviceName" FROM "Appointment" a JOIN "Service" s ON s.id = a."serviceId" WHERE a.status <> \'cancelled\' ORDER BY a.date ASC, a.time ASC, a."createdAt" ASC',
+          'SELECT a.id, a."clientName", a."clientWhatsapp", a.date, a.time, a.status, a."createdAt", s.name AS "serviceName" FROM "Appointment" a JOIN "Service" s ON s.id = a."serviceId" WHERE a.status NOT IN (\'cancelled\', \'completed\') ORDER BY a.date ASC, a.time ASC, a."createdAt" ASC',
         );
         sendAdminJson(res, 200, result.rows);
       } catch (error) {
@@ -295,7 +295,7 @@ async function handleApi(req, res) {
     if (appointmentMatch && req.method === 'PATCH') {
       try {
         const { status } = await readBody(req);
-        if (!['confirmed', 'cancelled'].includes(status)) {
+        if (!['confirmed', 'cancelled', 'completed'].includes(status)) {
           sendAdminJson(res, 400, { error: 'Status inválido.' });
           return;
         }
@@ -337,7 +337,7 @@ async function handleApi(req, res) {
         connection = await db.connect();
         await connection.query('BEGIN');
         await connection.query('INSERT INTO "BlockedDay" (date, reason) VALUES ($1, $2) ON CONFLICT (date) DO UPDATE SET reason = EXCLUDED.reason', [date, String(reason).slice(0, 160)]);
-        const cancelled = await connection.query('UPDATE "Appointment" SET status = \'cancelled\', "updatedAt" = NOW() WHERE date = $1 AND status <> \'cancelled\'', [date]);
+        const cancelled = await connection.query('UPDATE "Appointment" SET status = \'cancelled\', "updatedAt" = NOW() WHERE date = $1 AND status NOT IN (\'cancelled\', \'completed\')', [date]);
         await connection.query('DELETE FROM "BookingHold" WHERE date = $1', [date]);
         await connection.query('COMMIT');
         sendAdminJson(res, 200, { ok: true, cancelled: cancelled.rowCount });
@@ -567,7 +567,8 @@ async function initializeDatabase() {
     const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
     await db.query(schema);
     await db.query('ALTER TABLE "Appointment" DROP CONSTRAINT IF EXISTS "Appointment_date_time_key"');
-    await db.query('CREATE UNIQUE INDEX IF NOT EXISTS "Appointment_date_time_active_key" ON "Appointment" (date, time) WHERE status <> \'cancelled\'');
+    await db.query('DROP INDEX IF EXISTS "Appointment_date_time_active_key"');
+    await db.query('CREATE UNIQUE INDEX IF NOT EXISTS "Appointment_date_time_bookable_key" ON "Appointment" (date, time) WHERE status NOT IN (\'cancelled\', \'completed\')');
     const services = [
       { name: 'Alongamento', price: 150, duration: 2 },
       { name: 'Manutenção', price: 100, duration: 2 },

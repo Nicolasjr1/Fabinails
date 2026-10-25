@@ -251,6 +251,29 @@ body[data-step="times"] .time-list { grid-template-columns: repeat(3, minmax(0, 
 .danger-button { min-height: 46px; background: var(--rose-dark); font-size: 14px; }
 .blocked-day-item { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); background: var(--white); font-size: 14px; }
 
+.admin-agenda-layout { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); align-items: start; gap: 30px; margin-top: 20px; }
+.admin-calendar-panel { width: 100%; padding: 18px; }
+.admin-calendar-panel .calendar-header { grid-template-columns: 40px 1fr 40px; height: 42px; }
+.admin-calendar-panel .calendar-header h3 { font-size: 20px; }
+.admin-calendar-panel .calendar-weekdays { font-size: 10px; }
+.admin-calendar-panel .calendar-day, .admin-calendar-panel .calendar-empty { width: 38px; height: 42px; }
+.admin-calendar-day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 3px; font-size: 13px; }
+.admin-calendar-day.has-slots::after { display: none; }
+.admin-calendar-day .calendar-count { min-width: 12px; color: var(--rose-dark); font-size: 9px; line-height: 10px; }
+.admin-calendar-day.is-selected .calendar-count { color: white; }
+.day-schedule { min-width: 0; }
+.day-schedule h3 { margin: 0 0 8px; font: 500 22px/1.2 var(--display); text-transform: capitalize; }
+.day-schedule .admin-message { margin: 0 0 8px; }
+.appointments-list { gap: 0; }
+.appointment-row { min-width: 0; display: grid; grid-template-columns: 64px minmax(140px, 1fr) minmax(125px, auto) auto; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); }
+.appointment-row-time { color: var(--rose-dark); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.appointment-row-details { min-width: 0; display: grid; gap: 4px; }
+.appointment-row-details strong { overflow-wrap: anywhere; font-size: 14px; }
+.appointment-row-details span { overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+.appointment-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.appointment-row-actions .secondary-button, .appointment-row-actions .cancel-button { min-height: 34px; padding: 6px 9px; font-size: 12px; }
+.appointment-whatsapp { color: var(--rose-dark); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
 @media (max-width: 680px) {
   .header-actions { gap: 0; }
   .header-actions .studio-location { display: none; }
@@ -259,9 +282,13 @@ body[data-step="times"] .time-list { grid-template-columns: repeat(3, minmax(0, 
   .admin-login { margin: 24px auto; }
   .admin-heading { align-items: flex-start; }
   .admin-section { padding: 20px 0; }
-  .appointment-item { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px; }
-  .appointment-actions { justify-content: stretch; }
-  .appointment-actions > * { flex: 1 1 140px; }
+  .admin-agenda-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .admin-calendar-panel { max-width: 420px; margin-inline: auto; }
+  .admin-calendar-panel .calendar-day, .admin-calendar-panel .calendar-empty { width: 38px; }
+  .appointment-row { grid-template-columns: 54px minmax(0, 1fr); gap: 8px 12px; }
+  .appointment-row > .appointment-status { grid-column: 2; }
+  .appointment-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .appointment-row-actions > * { flex: 0 1 auto; }
   .blocked-day-form { grid-template-columns: minmax(0, 1fr); }
   .blocked-day-item { align-items: flex-start; flex-direction: column; }
   .blocked-day-item .secondary-button { width: 100%; }

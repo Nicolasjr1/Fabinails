@@ -47,11 +47,28 @@
 
         <section class="admin-section" aria-labelledby="appointments-title">
           <div class="admin-section-heading">
-            <h2 id="appointments-title">Agendamentos</h2>
+            <h2 id="appointments-title">Agenda</h2>
             <button id="reload-appointments" class="secondary-button" type="button">Atualizar</button>
           </div>
-          <p id="appointments-message" class="admin-message" aria-live="polite"></p>
-          <div id="appointments-list" class="appointments-list"></div>
+          <p class="admin-help">Selecione um dia para consultar os horários marcados.</p>
+          <div class="admin-agenda-layout">
+            <section class="calendar-panel admin-calendar-panel" aria-label="Calendário de agendamentos">
+              <div class="calendar-header">
+                <button id="calendar-previous" class="calendar-nav" type="button" aria-label="Mês anterior">‹</button>
+                <h3 id="calendar-month-label"></h3>
+                <button id="calendar-next" class="calendar-nav" type="button" aria-label="Próximo mês">›</button>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+              </div>
+              <div id="admin-calendar-grid" class="calendar-grid"></div>
+            </section>
+            <section class="day-schedule" aria-labelledby="selected-date-label">
+              <h3 id="selected-date-label"></h3>
+              <p id="appointments-message" class="admin-message" aria-live="polite"></p>
+              <div id="appointments-list" class="appointments-list"></div>
+            </section>
+          </div>
         </section>
 
         <section class="admin-section" aria-labelledby="blocked-title">

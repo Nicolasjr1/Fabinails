@@ -7,6 +7,21 @@ const appointmentsList = $('#appointments-list');
 const appointmentsMessage = $('#appointments-message');
 const blockedDaysList = $('#blocked-days-list');
 const blockedMessage = $('#blocked-message');
+const calendarGrid = $('#admin-calendar-grid');
+const selectedDateLabel = $('#selected-date-label');
+let appointments = [];
+
+function saoPauloDateKey() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+let selectedDate = saoPauloDateKey();
+let calendarMonth = new Date(`${selectedDate}T12:00:00-03:00`);
+calendarMonth.setUTCDate(1);
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -26,7 +41,60 @@ function formatDate(date) {
 }
 
 function labelStatus(status) {
-  return ({ active: 'Aguardando confirmação', confirmed: 'Confirmado', cancelled: 'Cancelado' })[status] || status;
+  return ({ active: 'Aguardando confirmação', confirmed: 'Confirmado', completed: 'Concluído', cancelled: 'Cancelado' })[status] || status;
+}
+
+function dateKey(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function renderCalendar() {
+  const year = calendarMonth.getUTCFullYear();
+  const month = calendarMonth.getUTCMonth();
+  $('#calendar-month-label').textContent = new Intl.DateTimeFormat('pt-BR', {
+    month: 'long', year: 'numeric', timeZone: 'UTC',
+  }).format(calendarMonth);
+  calendarGrid.replaceChildren();
+
+  const offset = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
+  for (let index = 0; index < offset; index += 1) {
+    const empty = document.createElement('span');
+    empty.className = 'calendar-empty';
+    empty.setAttribute('aria-hidden', 'true');
+    calendarGrid.append(empty);
+  }
+
+  const appointmentsPerDay = new Map();
+  appointments.forEach((appointment) => {
+    appointmentsPerDay.set(appointment.date, (appointmentsPerDay.get(appointment.date) || 0) + 1);
+  });
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const today = saoPauloDateKey();
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const key = dateKey(year, month, day);
+    const count = appointmentsPerDay.get(key) || 0;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `calendar-day admin-calendar-day${count ? ' has-slots' : ''}${key === selectedDate ? ' is-selected' : ''}${key === today ? ' is-today' : ''}`;
+    button.setAttribute('aria-pressed', String(key === selectedDate));
+    button.setAttribute('aria-label', `${formatDate(key)}${count ? `, ${count} agendamento(s)` : ', sem agendamentos'}`);
+    const number = document.createElement('span');
+    number.textContent = String(day);
+    button.append(number);
+    if (count) {
+      const badge = document.createElement('span');
+      badge.className = 'calendar-count';
+      badge.textContent = String(count);
+      button.append(badge);
+    }
+    button.addEventListener('click', () => {
+      selectedDate = key;
+      renderCalendar();
+      renderDaySchedule();
+    });
+    calendarGrid.append(button);
+  }
 }
 
 function makeButton(label, className, onClick) {
@@ -47,6 +115,7 @@ function whatsappLink(appointment) {
 
 async function updateStatus(appointment, status) {
   if (status === 'cancelled' && !window.confirm(`Cancelar o horário de ${appointment.clientName} em ${formatDate(appointment.date)} às ${appointment.time}?`)) return;
+  if (status === 'completed' && !window.confirm(`Marcar o atendimento de ${appointment.clientName} às ${appointment.time} como concluído? Ele sairá da agenda ativa.`)) return;
   try {
     await api(`/api/admin/appointments/${encodeURIComponent(appointment.id)}`, {
       method: 'PATCH', body: JSON.stringify({ status }),
@@ -57,57 +126,65 @@ async function updateStatus(appointment, status) {
   }
 }
 
+function renderDaySchedule() {
+  selectedDateLabel.textContent = formatDate(selectedDate);
+  appointmentsList.replaceChildren();
+  const dayAppointments = appointments.filter((appointment) => appointment.date === selectedDate);
+  if (!dayAppointments.length) {
+    appointmentsMessage.textContent = 'Nenhum horário marcado para este dia.';
+    return;
+  }
+
+  appointmentsMessage.textContent = `${dayAppointments.length} horário(s) marcado(s)`;
+  dayAppointments.forEach((appointment) => {
+    const row = document.createElement('article');
+    row.className = 'appointment-row';
+    const time = document.createElement('time');
+    time.className = 'appointment-row-time';
+    time.textContent = appointment.time;
+    const details = document.createElement('div');
+    details.className = 'appointment-row-details';
+    const name = document.createElement('strong');
+    name.textContent = appointment.clientName;
+    const service = document.createElement('span');
+    service.textContent = `${appointment.serviceName} · ${appointment.clientWhatsapp}`;
+    details.append(name, service);
+    const status = document.createElement('span');
+    status.className = 'appointment-status';
+    status.textContent = labelStatus(appointment.status);
+    const actions = document.createElement('div');
+    actions.className = 'appointment-row-actions';
+    if (appointment.status !== 'confirmed') {
+      actions.append(makeButton('Confirmar', 'secondary-button', () => updateStatus(appointment, 'confirmed')));
+    }
+    actions.append(makeButton('Concluído', 'secondary-button', () => updateStatus(appointment, 'completed')));
+    actions.append(makeButton('Cancelar', 'cancel-button', () => updateStatus(appointment, 'cancelled')));
+    const whatsapp = document.createElement('a');
+    whatsapp.className = 'appointment-whatsapp';
+    whatsapp.href = whatsappLink(appointment);
+    whatsapp.target = '_blank';
+    whatsapp.rel = 'noopener noreferrer';
+    whatsapp.textContent = 'WhatsApp';
+    actions.append(whatsapp);
+    row.append(time, details, status, actions);
+    appointmentsList.append(row);
+  });
+}
+
 async function loadAppointments() {
   appointmentsMessage.textContent = 'Carregando agenda...';
   try {
-    const appointments = await api('/api/admin/appointments');
-    appointmentsList.replaceChildren();
-    if (!appointments.length) {
-      appointmentsMessage.textContent = 'Ainda não há agendamentos.';
-      return;
-    }
-    appointmentsMessage.textContent = `${appointments.length} agendamento(s)`;
-    appointments.forEach((appointment) => {
-      const item = document.createElement('article');
-      item.className = `appointment-item status-${appointment.status}`;
-      const details = document.createElement('div');
-      details.className = 'appointment-details';
-      const date = document.createElement('p');
-      date.className = 'appointment-date';
-      date.textContent = `${formatDate(appointment.date)} · ${appointment.time}`;
-      const name = document.createElement('h3');
-      name.textContent = appointment.clientName;
-      const info = document.createElement('p');
-      info.className = 'appointment-info';
-      info.textContent = `${appointment.serviceName} · ${appointment.clientWhatsapp}`;
-      const status = document.createElement('span');
-      status.className = 'appointment-status';
-      status.textContent = labelStatus(appointment.status);
-      details.append(date, name, info, status);
-
-      const actions = document.createElement('div');
-      actions.className = 'appointment-actions';
-      if (appointment.status !== 'cancelled') {
-        const whatsapp = document.createElement('a');
-        whatsapp.className = 'secondary-button';
-        whatsapp.href = whatsappLink(appointment);
-        whatsapp.target = '_blank';
-        whatsapp.rel = 'noopener noreferrer';
-        whatsapp.textContent = 'Pedir confirmação no WhatsApp';
-        actions.append(whatsapp);
-      }
-      if (appointment.status !== 'confirmed' && appointment.status !== 'cancelled') {
-        actions.append(makeButton('Marcar confirmado', 'secondary-button', () => updateStatus(appointment, 'confirmed')));
-      }
-      if (appointment.status !== 'cancelled') {
-        actions.append(makeButton('Cancelar horário', 'cancel-button', () => updateStatus(appointment, 'cancelled')));
-      }
-      item.append(details, actions);
-      appointmentsList.append(item);
-    });
+    appointments = await api('/api/admin/appointments');
+    renderCalendar();
+    renderDaySchedule();
   } catch (error) {
     appointmentsMessage.textContent = error.message;
   }
+}
+
+function changeCalendarMonth(offset) {
+  calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + offset, 1));
+  renderCalendar();
 }
 
 async function loadBlockedDays() {
@@ -177,6 +254,8 @@ $('#blocked-day-form').addEventListener('submit', async (event) => {
 });
 
 $('#reload-appointments').addEventListener('click', loadAppointments);
+$('#calendar-previous').addEventListener('click', () => changeCalendarMonth(-1));
+$('#calendar-next').addEventListener('click', () => changeCalendarMonth(1));
 $('#admin-logout').addEventListener('click', async () => {
   await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
   dashboard.hidden = true;
